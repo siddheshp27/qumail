@@ -8,12 +8,9 @@ import { startRegistration } from "@simplewebauthn/browser";
 
 export default function Page() {
   const handleRegisterPassKey = async () => {
-    const email = "siddheshpatil003@gmail.com";
-    const response = await getRegisterChallenge(email);
-    const { options } = response;
+    const { options } = await getRegisterChallenge();
     const authResult = await startRegistration(options);
-    // console.log(authResult);
-    const temp = await verifyRegistration({ email, creds: authResult });
+    const temp = await verifyRegistration({ creds: authResult });
     console.log(temp);
   };
   return (

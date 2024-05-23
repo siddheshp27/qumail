@@ -1,8 +1,8 @@
-import { Pool } from 'pg';
+import { Pool } from "pg";
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { auth } from '@/app/session';
+import { auth } from "@/app/session";
 
 export const authOptions = {
   providers: [
@@ -19,7 +19,7 @@ export const authOptions = {
           });
 
           const client = await pool.connect();
-          const userQuery = `SELECT PasswordHash FROM "User" WHERE Username = $1`;
+          const userQuery = `SELECT Email , PasswordHash FROM "User" WHERE Username = $1`;
           const userResult = await client.query(userQuery, [userName]);
 
           if (userResult.rows.length === 0) {
@@ -43,7 +43,7 @@ export const authOptions = {
             return null;
           } else {
             console.log("User found");
-            return { userName }; // Return user information here
+            return { userName, email: userResult.rows[0].email }; // Return user information here
           }
         } catch (error) {
           console.log("Error: ", error);
@@ -69,6 +69,7 @@ export const authOptions = {
     async session({ session, token }) {
       if (token?.user) {
         session.user = token.user;
+        session.accesstoken = token.jti;
       }
       return session;
     },
