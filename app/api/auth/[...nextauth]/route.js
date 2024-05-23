@@ -1,32 +1,54 @@
+import { Pool } from 'pg';
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { auth } from '@/app/session';
 
 export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
       credentials: {},
-
       async authorize(credentials) {
-        const { email, password } = credentials;
+        const { userName, password } = credentials;
+        console.log(userName, password);
 
         try {
-          if (!user) {
+          const connectionString = process.env.NEON;
+          const pool = new Pool({
+            connectionString: connectionString,
+          });
+
+          const client = await pool.connect();
+          const userQuery = `SELECT PasswordHash FROM "User" WHERE Username = $1`;
+          const userResult = await client.query(userQuery, [userName]);
+
+          if (userResult.rows.length === 0) {
+            client.release();
             return null;
           }
 
-          const passwordsMatch = await bcrypt.compare(password, user.password);
+          const user = userResult.rows[0].passwordhash;
+          console.log(user);
+
+          if (!user) {
+            client.release();
+            console.log("Empty password");
+            return null;
+          }
+
+          const passwordsMatch = await bcrypt.compare(password, user);
+          client.release();
 
           if (!passwordsMatch) {
             return null;
           } else {
             console.log("User found");
+            return { userName };
           }
-
-          return user;
         } catch (error) {
           console.log("Error: ", error);
+          return null;
         }
       },
     }),
@@ -39,6 +61,9 @@ export const authOptions = {
     signIn: "/login",
   },
 };
+
+export const config = authOptions;
+export { auth };
 
 const handler = NextAuth(authOptions);
 
