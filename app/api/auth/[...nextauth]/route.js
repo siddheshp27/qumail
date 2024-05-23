@@ -11,7 +11,6 @@ export const authOptions = {
       credentials: {},
       async authorize(credentials) {
         const { userName, password } = credentials;
-        console.log(userName, password);
 
         try {
           const connectionString = process.env.NEON;
@@ -44,7 +43,7 @@ export const authOptions = {
             return null;
           } else {
             console.log("User found");
-            return { userName };
+            return { userName }; // Return user information here
           }
         } catch (error) {
           console.log("Error: ", error);
@@ -59,6 +58,20 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.user = user;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token?.user) {
+        session.user = token.user;
+      }
+      return session;
+    },
   },
 };
 
