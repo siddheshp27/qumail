@@ -10,8 +10,8 @@ export const authOptions = {
       name: "credentials",
       credentials: {},
       async authorize(credentials) {
-        const { userName, password } = credentials;
-
+        const { userName, password, passkeyauth } = credentials;
+        let userResult;
         try {
           const connectionString = process.env.NEON;
           const pool = new Pool({
@@ -19,11 +19,16 @@ export const authOptions = {
           });
 
           const client = await pool.connect();
-          const userQuery = `SELECT Email , PasswordHash FROM "User" WHERE Username = $1`;
-          const userResult = await client.query(userQuery, [userName]);
+          const userQuery = `SELECT userid, email , passwordhash FROM "User" WHERE Username = $1`;
+          userResult = await client.query(userQuery, [userName]);
+          client.release();
+        } catch (error) {
+          console.log("Error: ", error);
+          return null;
+        }
 
+        if (!passkeyauth) {
           if (userResult.rows.length === 0) {
-            client.release();
             return null;
           }
 
@@ -31,23 +36,28 @@ export const authOptions = {
           console.log(user);
 
           if (!user) {
-            client.release();
             console.log("Empty password");
             return null;
           }
 
           const passwordsMatch = await bcrypt.compare(password, user);
-          client.release();
 
           if (!passwordsMatch) {
             return null;
           } else {
             console.log("User found");
-            return { userName, email: userResult.rows[0].email }; // Return user information here
+            return {
+              userName,
+              email: userResult.rows[0].email,
+              userId: userResult.rows[0].userid,
+            }; // Return user information here
           }
-        } catch (error) {
-          console.log("Error: ", error);
-          return null;
+        } else {
+          return {
+            userName,
+            email: userResult.rows[0].email,
+            userId: userResult.rows[0].userid,
+          };
         }
       },
     }),
@@ -57,19 +67,23 @@ export const authOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/login",
+    signIn: ["/login", "/loginwithpasskey"],
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.user = user;
+        token.userName = user.userName;
+        token.email = user.email;
+        token.userId = user.userId;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token?.user) {
-        session.user = token.user;
+      if (token?.userId) {
+        session.userName = token.userName;
         session.accesstoken = token.jti;
+        session.email = token.email;
+        session.userId = token.userId;
       }
       return session;
     },

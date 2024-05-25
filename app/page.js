@@ -1,113 +1,149 @@
-import Image from "next/image";
+import React from "react";
 
-export default function Home() {
+const demoEmails = [
+  {
+    id: 1,
+    sender: "John Doe",
+    subject: "Meeting Reminder",
+    preview: "Just a reminder about the meeting tomorrow at 10 AM...",
+    date: "2024-05-24",
+  },
+  {
+    id: 2,
+    sender: "Jane Smith",
+    subject: "Project Update",
+    preview: "The latest update on the project is as follows...",
+    date: "2024-05-23",
+  },
+  {
+    id: 3,
+    sender: "Events Team",
+    subject: "Invitation to Event",
+    preview: "You are invited to our annual event happening next month...",
+    date: "2024-05-22",
+  },
+  {
+    id: 4,
+    sender: "Product Team",
+    subject: "New Features Released",
+    preview: "We are excited to announce new features in our product...",
+    date: "2024-05-21",
+  },
+  {
+    id: 5,
+    sender: "Newsletter",
+    subject: "Weekly Newsletter",
+    preview: "Here is your weekly newsletter with updates and articles...",
+    date: "2024-05-20",
+  },
+];
+
+const user = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  initials: "JD",
+};
+
+const HomePage = () => {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
+    <div className="dark flex h-screen">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-800 shadow-lg">
+        <div className="p-6">
+          <h2 className="text-2xl font-semibold text-gray-100">MyApp</h2>
+        </div>
+        <nav className="mt-6">
           <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#"
+            className="block px-6 py-2 text-gray-300 hover:bg-gray-700"
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
+            Inbox
           </a>
+          <a
+            href="#"
+            className="block px-6 py-2 text-gray-300 hover:bg-gray-700"
+          >
+            Sent
+          </a>
+          <a
+            href="#"
+            className="block px-6 py-2 text-gray-300 hover:bg-gray-700"
+          >
+            Drafts
+          </a>
+          <a
+            href="#"
+            className="block px-6 py-2 text-gray-300 hover:bg-gray-700"
+          >
+            Trash
+          </a>
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col bg-gray-900">
+        {/* Top Bar */}
+        <div className="flex items-center justify-between p-4 bg-gray-800 shadow-md">
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="Search mail"
+              className="px-4 py-2 border rounded-l-md border-gray-700 focus:outline-none focus:ring focus:border-blue-300"
+            />
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-500">
+              Search
+            </button>
+          </div>
+          <div className="relative group">
+            <button className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-full focus:outline-none">
+              <span className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full">
+                {user.initials}
+              </span>
+            </button>
+            <div className="absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="px-4 py-2">
+                <p className="font-semibold">{user.name}</p>
+                <p className="text-sm text-gray-400">{user.email}</p>
+              </div>
+              <div className="border-t border-gray-700"></div>
+              <div className="px-4 py-2">
+                <button className="w-full text-left px-4 py-2 text-white bg-red-600 rounded hover:bg-red-500">
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Email List */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-100">Inbox</h2>
+            <button className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500">
+              Compose
+            </button>
+          </div>
+          <div className="space-y-4">
+            {demoEmails.map((email) => (
+              <div
+                key={email.id}
+                className="p-4 bg-gray-800 shadow-sm rounded-lg hover:bg-gray-700"
+              >
+                <div className="flex justify-between">
+                  <h3 className="font-semibold text-gray-100">
+                    {email.subject}
+                  </h3>
+                  <span className="text-sm text-gray-400">{email.date}</span>
+                </div>
+                <p className="text-gray-300">{email.sender}</p>
+                <p className="text-gray-400">{email.preview}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
-}
+};
+
+export default HomePage;

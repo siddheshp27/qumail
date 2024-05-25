@@ -1,11 +1,11 @@
-"use client"
-import React,{useState} from "react";
+"use client";
+import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function Login() {
   const router = useRouter();
-  const [userName, setUserName] = useState("")
+  const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,11 +13,11 @@ export default function Login() {
       const res = await signIn("credentials", {
         userName,
         password,
+        passkeyauth: false,
         redirect: false,
       });
 
       if (res.error) {
-
         console.log("Invalid Credentials");
         return;
       }
@@ -96,60 +96,66 @@ export default function Login() {
                 </p>
               </div>
 
-              <form className="mt-8 grid grid-cols-6 gap-6" onSubmit={handleSubmit}>
-              <div className="col-span-6">
-              <label
-                htmlFor="userName"
-                className="block text-sm font-medium leading-6 text-gray-900"
+              <form
+                className="mt-8 grid grid-cols-6 gap-6"
+                onSubmit={handleSubmit}
               >
-                User Name
-              </label>
-              <div className="mt-2">
-                <input
-                  id="userName"
-                  name="userName"
-                  type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="col-span-6 sm:col-span-3">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Password
-                </label>
-                <div className="text-sm">
-                  <a
-                    href="#"
-                    className="font-semibold text-indigo-600 hover:text-indigo-500"
+                <div className="col-span-6">
+                  <label
+                    htmlFor="userName"
+                    className="block text-sm font-medium leading-6 text-gray-900"
                   >
-                    Forgot password?
-                  </a>
+                    User Name
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      id="userName"
+                      name="userName"
+                      type="text"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      required
+                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="mt-2">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
+
+                <div className="col-span-6 sm:col-span-3">
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Password
+                    </label>
+                    <div className="text-sm">
+                      <a
+                        href="#"
+                        className="font-semibold text-indigo-600 hover:text-indigo-500"
+                      >
+                        Forgot password?
+                      </a>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
 
                 <div className="col-span-6 sm:flex sm:items-center sm:gap-4">
-                  <button className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500" type="submit">
+                  <button
+                    className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500"
+                    type="submit"
+                  >
                     Log In
                   </button>
 

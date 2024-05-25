@@ -3,21 +3,23 @@
 // import { redirect } from "next/navigation";
 // import { authOptions } from "../api/auth/[...nextauth]/route";
 import React, { useState } from "react";
-// import { useRouter } from "next/navigation";
+import { getSession } from "next-auth/react";
+
+import { useRouter } from "next/navigation";
 import {
   getAuthenticationChallenge,
   verifyAuthentication,
 } from "../api/auth/passkey/passkey";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { signIn } from "next-auth/react";
 export default function Page() {
-  // const session = await getServerSession(authOptions);
-
-  // if (session) console.log(session);
-  // const router = useRouter();
+  const router = useRouter();
   const [userName, setUserName] = useState("");
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { options } = await getAuthenticationChallenge(userName);
+    const session = await getSession();
+    console.log(session);
     console.log(options);
     let asseResp;
     try {
@@ -30,7 +32,29 @@ export default function Page() {
       throw error;
     }
     console.log(asseResp);
-    await verifyAuthentication({ userName, body: asseResp });
+    const verificationresult = await verifyAuthentication({
+      userName,
+      body: asseResp,
+    });
+    console.log(verificationresult);
+    if (verificationresult.verified) {
+      try {
+        const res = await signIn("credentials", {
+          userName,
+          password: "",
+          passkeyauth: true,
+          redirect: false,
+        });
+        console.log(res);
+        if (res.error) {
+          console.log("Invalid Credentials");
+          return;
+        }
+        router.push("/");
+      } catch (error) {
+        console.log(error);
+      }
+    }
   };
 
   return (

@@ -132,7 +132,7 @@ const verifyAuthentication = async ({ userName, body }) => {
   }
   const { verified } = verification;
   console.log(verified);
-  return { verified };
+  return verification;
 };
 export {
   getRegisterChallenge,
