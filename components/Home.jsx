@@ -1,5 +1,6 @@
 "use client";
-
+import Compose from "@/components/Compose";
+import React, { useState } from "react";
 import { signOut } from "next-auth/react";
 
 const demoEmails = [
@@ -46,7 +47,9 @@ const user = {
   initials: "JD",
 };
 
-const HomePage = ({ session }) => {
+const HomePage = ({ session, messages }) => {
+  const [isCompose, setIsCompose] = useState(false);
+
   console.log(session);
   const handleSignOut = async () => {
     const res = await signOut();
@@ -59,7 +62,16 @@ const HomePage = ({ session }) => {
         <div className="p-6">
           <h2 className="text-2xl font-semibold text-gray-100">MyApp</h2>
         </div>
+
         <nav className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setIsCompose((prev) => !prev)}
+              className="ml-3 px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500"
+            >
+              {!isCompose ? "Compose" : "Close Editor"}
+            </button>
+          </div>
           <a
             href="#"
             className="block px-6 py-2 text-gray-300 hover:bg-gray-700"
@@ -127,29 +139,38 @@ const HomePage = ({ session }) => {
 
         {/* Email List */}
         <div className="flex-1 p-6 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-100">Inbox</h2>
-            <button className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500">
-              Compose
-            </button>
-          </div>
-          <div className="space-y-4">
-            {demoEmails.map((email) => (
-              <div
-                key={email.id}
-                className="p-4 bg-gray-800 shadow-sm rounded-lg hover:bg-gray-700"
-              >
-                <div className="flex justify-between">
-                  <h3 className="font-semibold text-gray-100">
-                    {email.subject}
-                  </h3>
-                  <span className="text-sm text-gray-400">{email.date}</span>
-                </div>
-                <p className="text-gray-300">{email.sender}</p>
-                <p className="text-gray-400">{email.preview}</p>
-              </div>
-            ))}
-          </div>
+          {isCompose && <Compose session={session} />}
+          {!isCompose && (
+            <div className="space-y-4">
+              {messages.map((message) => {
+                const { messageid, body, senderemail, subject, datesent } =
+                  message;
+                let preview = body;
+                if (preview.length > 20) {
+                  const cutoff = preview.slice(0, 30).lastIndexOf(" ");
+                  preview =
+                    cutoff > 0
+                      ? preview.slice(0, cutoff) + "..."
+                      : preview.slice(0, 30) + "...";
+                }
+                return (
+                  <div
+                    key={messageid}
+                    className="p-4 bg-gray-800 shadow-sm rounded-lg hover:bg-gray-700"
+                  >
+                    <div className="flex justify-between">
+                      <h3 className="font-semibold text-gray-100">{subject}</h3>
+                      <span className="text-sm text-gray-400">
+                        {new Date(datesent).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-gray-300">{senderemail}</p>
+                    <p className="text-gray-400">{preview}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

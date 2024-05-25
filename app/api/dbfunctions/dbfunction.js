@@ -1,3 +1,4 @@
+"use server";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 
@@ -174,9 +175,109 @@ const getUserPasskey = async (userName, id) => {
 
 const getUserMessages = async ({ userId }) => {
   console.log("test", userId);
-  const getDataQuery = `SELECT * from "Message"`;
-  const result = await runQuery(getDataQuery);
+  const getDataQuery = `
+  SELECT
+    "Message".MessageID,
+    "Message".Subject,
+    "Message".Body,
+    "Message".DateSent,
+    "User".Email AS SenderEmail,
+    "Recipient".IsRead,
+    "Recipient".IsArchived,
+    "Recipient".IsDeleted
+  FROM
+      "Message"
+  JOIN
+      "User" ON "Message".SenderID = "User".UserID
+  JOIN
+      "Recipient" ON "Message".MessageID = "Recipient".MessageID
+  WHERE
+      "Recipient".UserID = $1
+  ORDER BY "Message".messageid desc 
+  LIMIT 10 OFFSET 0;
+  `;
+  const result = await runQuery(getDataQuery, [userId]);
   return result;
 };
 
-export { insertPasskeyData, getUserPasskeys, getUserPasskey, getUserMessages };
+const sendMessage = async ({ receiverEmails, subject, body, senderId }) => {
+  const getUserIdByEmailQuery = `
+  SELECT "User".UserID
+  FROM "User"
+  WHERE "User".Email = $1;
+`;
+
+  const insertMessageQuery = `
+  INSERT INTO "Message" (Subject, Body, DateSent, SenderID)
+  VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+  RETURNING "Message".MessageID;
+`;
+
+  const insertRecipientQuery = `
+  INSERT INTO "Recipient" (MessageID, UserID, IsRead, IsArchived, IsDeleted)
+  VALUES ($1, $2, FALSE, FALSE, FALSE);
+`;
+  const connectionString = process.env.NEON;
+
+  const pool = new Pool({
+    connectionString: connectionString,
+  });
+
+  try {
+    const client = await pool.connect();
+    try {
+      // Begin transaction
+      await client.query("BEGIN");
+
+      // Find UserIDs of all recipients
+      const recipientIds = [];
+      for (const email of receiverEmails) {
+        const res = await client.query(getUserIdByEmailQuery, [email]);
+        if (res.rows.length > 0) {
+          recipientIds.push(res.rows[0].userid);
+        } else {
+          console.error(`No user found with email: ${email}`);
+        }
+      }
+
+      if (recipientIds.length === 0) {
+        throw new Error("No valid recipients found.");
+      }
+
+      // Insert the new message and get the MessageID
+      const messageRes = await client.query(insertMessageQuery, [
+        subject,
+        body,
+        senderId,
+      ]);
+      const newMessageId = messageRes.rows[0].messageid;
+
+      // Insert into Recipient table for each recipient
+      for (const userId of recipientIds) {
+        await client.query(insertRecipientQuery, [newMessageId, userId]);
+      }
+
+      // Commit transaction
+      await client.query("COMMIT");
+
+      console.log("Email sent successfully!");
+    } catch (error) {
+      // Rollback transaction in case of error
+      await client.query("ROLLBACK");
+      console.error("Error sending email:", error);
+    } finally {
+      // Release the client
+      client.release();
+    }
+  } catch (err) {
+    console.error("Error connecting to the database:", err);
+  }
+};
+
+export {
+  insertPasskeyData,
+  getUserPasskeys,
+  getUserPasskey,
+  getUserMessages,
+  sendMessage,
+};

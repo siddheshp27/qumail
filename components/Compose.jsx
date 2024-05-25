@@ -1,21 +1,40 @@
 "use client";
-import React, { useState } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { sendMessage } from "@/app/api/dbfunctions/dbfunction";
+import React, { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
-export default function Compose() {
-  const [value, setValue] = useState('');
-  const [subject, setSubject] = useState('');
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        try {
-            //Here i will send data to server afterwards
-        } catch (error) {
-            
-        }
+export default function Compose({ session }) {
+  const [value, setValue] = useState("");
+  const [subject, setSubject] = useState("");
+  const [receivers, setReceivers] = useState([]);
+  const handleReceiversChange = (e) => {
+    const input = e.target.value;
+    const receiverArray = input.split(",").map((email) => email.trim());
+    setReceivers(receiverArray);
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await sendMessage({
+        receiverEmails: receivers,
+        subject,
+        body: value,
+        senderId: session.userId,
+      });
+      console.log({ receivers, subject, value });
+    } catch (error) {
+      console.error("Error submitting form", error);
     }
+  };
   return (
     <div className="compose-container">
+      <input
+        type="text"
+        placeholder="Enter Receivers (comma separated)"
+        onChange={handleReceiversChange}
+        className="subject-input text-white placeholder:text-gray-400"
+      />
       <input
         type="text"
         placeholder="Enter Subject"
@@ -23,15 +42,19 @@ export default function Compose() {
         onChange={(e) => setSubject(e.target.value)}
         className="subject-input text-white placeholder:text-gray-400"
       />
-      <ReactQuill 
-        theme="snow" 
-        value={value} 
-        onChange={setValue} 
-        className="editor" 
+      <ReactQuill
+        theme="snow"
+        value={value}
+        onChange={setValue}
+        className="editor"
       />
-      <button onClick={handleSubmit} className="mt-12 px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500" type="submit">
-            Send 
-            </button>
+      <button
+        onClick={handleSubmit}
+        className="mt-12 px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500"
+        type="submit"
+      >
+        Send
+      </button>
       <style jsx>{`
         .compose-container {
           display: flex;
@@ -54,7 +77,7 @@ export default function Compose() {
           background-color: #333;
           color: #fff;
         }
-       
+
         .editor {
           flex: 1;
           display: flex;
@@ -71,7 +94,7 @@ export default function Compose() {
           color: #fff;
           border: 1px solid #333;
           border-radius: 4px;
-          min-height:20rem 
+          min-height: 20rem;
         }
         :global(.ql-toolbar) {
           border: none;
@@ -82,7 +105,6 @@ export default function Compose() {
           border: none;
         }
       `}</style>
-       
     </div>
   );
 }
