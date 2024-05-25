@@ -1,4 +1,8 @@
-import React from "react";
+"use client"
+import Compose from "@/components/Compose";
+import React,{useState} from "react";
+
+
 
 const demoEmails = [
   {
@@ -45,6 +49,7 @@ const user = {
 };
 
 const HomePage = () => {
+  const [isCompose, setIsCompose] = useState(false)
   return (
     <div className="dark flex h-screen">
       {/* Sidebar */}
@@ -83,6 +88,8 @@ const HomePage = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-gray-900">
         {/* Top Bar */}
+
+      
         <div className="flex items-center justify-between p-4 bg-gray-800 shadow-md">
           <div className="flex items-center">
             <input
@@ -94,7 +101,7 @@ const HomePage = () => {
               Search
             </button>
           </div>
-          <div className="relative group">
+          {/* <div className="relative group">
             <button className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-full focus:outline-none">
               <span className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full">
                 {user.initials}
@@ -112,18 +119,19 @@ const HomePage = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Email List */}
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-100">Inbox</h2>
-            <button className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500">
-              Compose
+            <h2 className="text-xl font-semibold text-gray-100">{!isCompose ? "Inbox" : "Compose Email"}</h2>
+            <button onClick={()=>setIsCompose((prev)=>!prev)} className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500">
+            {!isCompose ? "Compose" : "Close Editor"}
             </button>
           </div>
-          <div className="space-y-4">
+          {isCompose && <Compose/>}
+          {!isCompose && (<div className="space-y-4">
             {demoEmails.map((email) => (
               <div
                 key={email.id}
@@ -139,7 +147,7 @@ const HomePage = () => {
                 <p className="text-gray-400">{email.preview}</p>
               </div>
             ))}
-          </div>
+          </div>)}
         </div>
       </div>
     </div>
