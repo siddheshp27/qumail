@@ -172,4 +172,11 @@ const getUserPasskey = async (userName, id) => {
   }
 };
 
-export { insertPasskeyData, getUserPasskeys, getUserPasskey };
+const getUserMessages = async ({ userId }) => {
+  console.log("test", userId);
+  const getDataQuery = `SELECT * from "Message"`;
+  const result = await runQuery(getDataQuery);
+  return result;
+};
+
+export { insertPasskeyData, getUserPasskeys, getUserPasskey, getUserMessages };
