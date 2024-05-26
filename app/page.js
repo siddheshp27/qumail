@@ -1,11 +1,14 @@
 import HomePage from "@/components/Home";
-import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/route";
 import { getUserMessages } from "./api/dbfunctions/dbfunction";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 const Page = async () => {
-  let currentOffset = 0;
   const session = await getServerSession(authOptions);
-  console.log(session.userId);
+
+  if (!session) redirect("/login");
+  let currentOffset = 0;
+  console.log(session?.userId);
   const messages = await getUserMessages({ userId: session?.userId });
   console.log(messages);
   return (

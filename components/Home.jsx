@@ -1,7 +1,11 @@
 "use client";
 import Compose from "@/components/Compose";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
+
+
+
 
 const demoEmails = [
   {
@@ -25,29 +29,11 @@ const demoEmails = [
     preview: "You are invited to our annual event happening next month...",
     date: "2024-05-22",
   },
-  {
-    id: 4,
-    sender: "Product Team",
-    subject: "New Features Released",
-    preview: "We are excited to announce new features in our product...",
-    date: "2024-05-21",
-  },
-  {
-    id: 5,
-    sender: "Newsletter",
-    subject: "Weekly Newsletter",
-    preview: "Here is your weekly newsletter with updates and articles...",
-    date: "2024-05-20",
-  },
 ];
 
-const user = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  initials: "JD",
-};
 
-const HomePage = ({ session, messages }) => {
+
+const HomePage = ({ session, messages }) => {  
   const [isCompose, setIsCompose] = useState(false);
 
   console.log(session);
@@ -113,28 +99,38 @@ const HomePage = ({ session, messages }) => {
               Search
             </button>
           </div>
-          <div className="relative group">
-            <button className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-full focus:outline-none">
-              <span className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full">
-                {user.initials}
-              </span>
-            </button>
-            <div className="absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="px-4 py-2">
-                <p className="font-semibold">{user.name}</p>
-                <p className="text-sm text-gray-400">{user.email}</p>
-              </div>
-              <div className="border-t border-gray-700"></div>
-              <div className="px-4 py-2">
-                <button
-                  onClick={handleSignOut}
-                  className="w-full text-left px-4 py-2 text-white bg-red-600 rounded hover:bg-red-500"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
+          <div className="ml-auto">
+            <Link
+              href="/loginwithpasskey"
+              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Create passkey
+            </Link>
           </div>
+           
+              <div className="relative group">
+                <button className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-full focus:outline-none">
+                  <span className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full uppercase">
+                     {session.userName.charAt(0)}
+                  </span>
+                </button>
+                <div className="absolute right-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="px-4 py-2">
+                    <p className="font-semibold text-white"> {session.userName}</p>
+                    <p className="text-sm text-gray-400"> {session.user.email}</p>
+                  </div>
+                  <div className="border-t border-gray-700"></div>
+                  <div className="px-4 py-2">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left px-4 py-2 text-white bg-red-600 rounded hover:bg-red-500"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </div>
+            
         </div>
 
         {/* Email List */}
