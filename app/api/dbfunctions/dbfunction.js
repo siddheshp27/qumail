@@ -1,6 +1,7 @@
 "use server";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
+import { unstable_noStore } from "next/cache";
 
 async function runQuery(query, values) {
   const connectionString = process.env.NEON;
@@ -174,6 +175,7 @@ const getUserPasskey = async (userName, id) => {
 };
 
 const getUserMessages = async ({ userId }) => {
+  unstable_noStore();
   console.log("test", userId);
   const getDataQuery = `
   SELECT

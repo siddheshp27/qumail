@@ -1,11 +1,12 @@
 "use client";
 import Compose from "@/components/Compose";
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-
-
-
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import { toast, ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css"; 
 
 const demoEmails = [
   {
@@ -31,15 +32,23 @@ const demoEmails = [
   },
 ];
 
-
-
-const HomePage = ({ session, messages }) => {  
+const HomePage = ({ session, messages }) => {
   const [isCompose, setIsCompose] = useState(false);
+  const [expandedMessage, setExpandedMessage] = useState(null);
 
-  console.log(session);
   const handleSignOut = async () => {
     const res = await signOut();
   };
+
+  const toggleReadMore = (messageId) => {
+    setExpandedMessage((prev) => (prev === messageId ? null : messageId));
+  };
+  const notify = () => {
+    toast.success("Email Sent successfully !", {
+      position: "top-center"
+    });
+  };
+
 
   return (
     <div className="dark flex h-screen">
@@ -107,53 +116,51 @@ const HomePage = ({ session, messages }) => {
               Create passkey
             </Link>
           </div>
-           
-              <div className="relative group">
-                <button className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-full focus:outline-none">
-                  <span className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full uppercase">
-                     {session.userName.charAt(0)}
-                  </span>
-                </button>
-                <div className="absolute right-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="px-4 py-2">
-                    <p className="font-semibold text-white"> {session.userName}</p>
-                    <p className="text-sm text-gray-400"> {session.user.email}</p>
-                  </div>
-                  <div className="border-t border-gray-700"></div>
-                  <div className="px-4 py-2">
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-white bg-red-600 rounded hover:bg-red-500"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </div>
+
+          <div className="relative group">
+            <button className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-full focus:outline-none">
+              <span className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full uppercase">
+                {session.userName.charAt(0)}
+              </span>
+            </button>
+            <div className="absolute right-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="px-4 py-2">
+                <p className="font-semibold text-white">{session.userName}</p>
+                <p className="text-sm text-gray-400">{session.user.email}</p>
               </div>
-            
+              <div className="border-t border-gray-700"></div>
+              <div className="px-4 py-2">
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-left px-4 py-2 text-white bg-red-600 rounded hover:bg-red-500"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Email List */}
         <div className="flex-1 p-6 overflow-y-auto">
-          {isCompose && <Compose session={session} />}
+          {isCompose && <Compose session={session} setIsCompose={setIsCompose} notify={notify}/>}
           {!isCompose && (
             <div className="space-y-4">
               {messages.map((message) => {
-                const { messageid, body, senderemail, subject, datesent } =
-                  message;
+                const { messageid, body, senderemail, subject, datesent } = message;
+                const isExpanded = expandedMessage === messageid;
                 let preview = body;
-                if (preview.length > 20) {
-                  const cutoff = preview.slice(0, 30).lastIndexOf(" ");
-                  preview =
-                    cutoff > 0
-                      ? preview.slice(0, cutoff) + "..."
-                      : preview.slice(0, 30) + "...";
+                if (!isExpanded) {
+                  const tempDiv = document.createElement("div");
+                  tempDiv.innerHTML = body;
+                  preview = tempDiv.textContent || tempDiv.innerText || "";
+                  if (preview.length > 20) {
+                    const cutoff = preview.slice(0, 30).lastIndexOf(" ");
+                    preview = cutoff > 0 ? preview.slice(0, cutoff) + "..." : preview.slice(0, 30) + "...";
+                  }
                 }
                 return (
-                  <div
-                    key={messageid}
-                    className="p-4 bg-gray-800 shadow-sm rounded-lg hover:bg-gray-700"
-                  >
+                  <div key={messageid} className="p-4 bg-gray-800 shadow-sm rounded-lg hover:bg-gray-700">
                     <div className="flex justify-between">
                       <h3 className="font-semibold text-gray-100">{subject}</h3>
                       <span className="text-sm text-gray-400">
@@ -161,7 +168,12 @@ const HomePage = ({ session, messages }) => {
                       </span>
                     </div>
                     <p className="text-gray-300">{senderemail}</p>
-                    <p className="text-gray-400">{preview}</p>
+                    <div className="text-gray-400">
+                      <div dangerouslySetInnerHTML={{ __html: isExpanded ? body : preview }} />
+                      <button onClick={() => toggleReadMore(messageid)} className="text-blue-400 hover:underline mt-2">
+                        {isExpanded ? "Show Less" : "Read More"}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
