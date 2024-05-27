@@ -55,7 +55,7 @@ const HomePage = ({ session, messages }) => {
       {/* Sidebar */}
       <div className="w-64 bg-gray-800 shadow-lg">
         <div className="p-6">
-          <h2 className="text-2xl font-semibold text-gray-100">MyApp</h2>
+          <h2 className="text-2xl font-semibold text-gray-100">QuMail</h2>
         </div>
 
         <nav className="mt-6">

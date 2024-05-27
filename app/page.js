@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 const Page = async () => {
   const session = await getServerSession(authOptions);
 
-  if (!session) redirect("/login");
+  if (!session) redirect("/home");
   let currentOffset = 0;
   console.log(session?.userId);
   const messages = await getUserMessages({ userId: session?.userId });
