@@ -1,6 +1,7 @@
 "use server";
 import { Pool } from "pg";
-import bcrypt from "bcryptjs";
+import axios from "axios";
+import crypto from "crypto";
 
 async function runQuery(query, values) {
   const connectionString = process.env.NEON;
@@ -200,23 +201,93 @@ const getUserMessages = async ({ userId }) => {
   return result;
 };
 
+async function getAvailableKey() {
+  const getKeyQuery = `
+    SELECT key_value FROM "quantumkeys" WHERE is_used = false LIMIT 1;
+  `;
+
+  const keyResult = await runQuery(getKeyQuery);
+  console.log(keyResult);
+
+  if (keyResult.length === 0) {
+    const response = await axios.get("http://3.108.228.32:8000/");
+    const keys = response.data;
+
+    for (const key of keys) {
+      const insertKeyQuery = `
+        INSERT INTO "quantumkeys" (key_value, is_used)
+        VALUES ($1, false);
+      `;
+      await runQuery(insertKeyQuery, [key]);
+    }
+    return keys[0];
+  } else {
+    return keyResult[0].key_value;
+  }
+}
+
+function ensureKeyLength(key) {
+  const decodedKey = Buffer.from(key, "base64");
+  if (decodedKey.length === 32) {
+    return decodedKey;
+  } else if (decodedKey.length < 32) {
+    // Pad the key with zero bytes if it's too short
+    const paddedKey = Buffer.alloc(32);
+    decodedKey.copy(paddedKey);
+    return paddedKey;
+  } else {
+    // Trim the key if it's too long
+    return decodedKey.slice(0, 32);
+  }
+}
+
+const encryptMessage = async ({ subject, body }) => {
+  if (!subject && !body) {
+    return { error: "Plaintext is required" };
+  }
+
+  try {
+    const key = await getAvailableKey();
+    const decodedKey = ensureKeyLength(key);
+
+    function encrypt(plaintext, key) {
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
+      let encrypted = cipher.update(plaintext, "utf8", "hex");
+      encrypted += cipher.final("hex");
+      return {
+        ciphertext: `${iv.toString("hex")}:${encrypted}`,
+      };
+    }
+
+    const encryptedSubject = encrypt(subject, decodedKey);
+    const encryptedBody = encrypt(body, decodedKey);
+
+    return { encryptedBody, encryptedSubject, key };
+  } catch (error) {
+    console.error("Error encrypting data:", error);
+    return { error: "Failed to encrypt data" };
+  }
+};
+
 const sendMessage = async ({ receiverEmails, subject, body, senderId }) => {
   const getUserIdByEmailQuery = `
-  SELECT "User".UserID
-  FROM "User"
-  WHERE "User".Email = $1;
-`;
+    SELECT "User".UserID
+    FROM "User"
+    WHERE "User".Email = $1;
+  `;
 
   const insertMessageQuery = `
-  INSERT INTO "Message" (Subject, Body, DateSent, SenderID)
-  VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
-  RETURNING "Message".MessageID;
-`;
+    INSERT INTO "Message" (Subject, Body, DateSent, SenderID, keyid)
+    VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)
+    RETURNING "Message".MessageID;
+  `;
 
   const insertRecipientQuery = `
-  INSERT INTO "Recipient" (MessageID, UserID, IsRead, IsArchived, IsDeleted)
-  VALUES ($1, $2, FALSE, FALSE, FALSE);
-`;
+    INSERT INTO "Recipient" (MessageID, UserID, IsRead, IsArchived, IsDeleted)
+    VALUES ($1, $2, FALSE, FALSE, FALSE);
+  `;
+
   const connectionString = process.env.NEON;
 
   const pool = new Pool({
@@ -244,11 +315,31 @@ const sendMessage = async ({ receiverEmails, subject, body, senderId }) => {
         throw new Error("No valid recipients found.");
       }
 
-      // Insert the new message and get the MessageID
-      const messageRes = await client.query(insertMessageQuery, [
+      // Encrypt the subject and body
+      const { encryptedSubject, encryptedBody, key } = await encryptMessage({
         subject,
         body,
+      });
+
+      if (encryptedSubject.error || encryptedBody.error) {
+        throw new Error("Encryption failed");
+      }
+
+      const getKeyId = async (key) => {
+        const getKeyIdQuery = `
+          SELECT key_id FROM "quantumkeys" WHERE key_value = $1;
+        `;
+        const id = await runQuery(getKeyIdQuery, [key]);
+        return id[0].key_id;
+      };
+
+      // Insert the new message and get the MessageID
+      const id = await getKeyId(key);
+      const messageRes = await client.query(insertMessageQuery, [
+        encryptedSubject.ciphertext,
+        encryptedBody.ciphertext,
         senderId,
+        id,
       ]);
       const newMessageId = messageRes.rows[0].messageid;
 
@@ -256,6 +347,15 @@ const sendMessage = async ({ receiverEmails, subject, body, senderId }) => {
       for (const userId of recipientIds) {
         await client.query(insertRecipientQuery, [newMessageId, userId]);
       }
+
+      // Mark the keys as used
+      const markKeyAsUsed = async (key) => {
+        const updateKeyQuery = `
+          UPDATE "quantumkeys" SET is_used = true WHERE key_value = $1;
+        `;
+        await runQuery(updateKeyQuery, [key]);
+      };
+      await markKeyAsUsed(key);
 
       // Commit transaction
       await client.query("COMMIT");

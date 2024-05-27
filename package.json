@@ -16,6 +16,7 @@
     "@simplewebauthn/browser": "^10.0.0",
     "@simplewebauthn/server": "^10.0.0",
     "@tailwindcss/forms": "^0.5.7",
+    "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "next": "14.2.3",
