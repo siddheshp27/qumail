@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-export default function Compose({ session }) {
+export default function Compose({ session,setIsCompose,notify }) {
   const [value, setValue] = useState("");
   const [subject, setSubject] = useState("");
   const [receivers, setReceivers] = useState([]);
@@ -22,6 +22,9 @@ export default function Compose({ session }) {
         body: value,
         senderId: session.userId,
       });
+      
+      notify();
+      setIsCompose(false);
       console.log({ receivers, subject, value });
     } catch (error) {
       console.error("Error submitting form", error);

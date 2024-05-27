@@ -1,15 +1,52 @@
 "use client";
 import Compose from "@/components/Compose";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const demoEmails = [
+  {
+    id: 1,
+    sender: "John Doe",
+    subject: "Meeting Reminder",
+    preview: "Just a reminder about the meeting tomorrow at 10 AM...",
+    date: "2024-05-24",
+  },
+  {
+    id: 2,
+    sender: "Jane Smith",
+    subject: "Project Update",
+    preview: "The latest update on the project is as follows...",
+    date: "2024-05-23",
+  },
+  {
+    id: 3,
+    sender: "Events Team",
+    subject: "Invitation to Event",
+    preview: "You are invited to our annual event happening next month...",
+    date: "2024-05-22",
+  },
+];
 
 const HomePage = ({ session, messages }) => {
   const [isCompose, setIsCompose] = useState(false);
+  const [expandedMessage, setExpandedMessage] = useState(null);
 
-  console.log(session);
   const handleSignOut = async () => {
     const res = await signOut();
+  };
+
+  const toggleReadMore = (messageId) => {
+    setExpandedMessage((prev) => (prev === messageId ? null : messageId));
+  };
+  const notify = () => {
+    toast.success("Email Sent successfully !", {
+      position: "top-center",
+    });
   };
 
   return (
@@ -17,7 +54,7 @@ const HomePage = ({ session, messages }) => {
       {/* Sidebar */}
       <div className="w-64 bg-gray-800 shadow-lg">
         <div className="p-6">
-          <h2 className="text-2xl font-semibold text-gray-100">MyApp</h2>
+          <h2 className="text-2xl font-semibold text-gray-100">QuMail</h2>
         </div>
 
         <nav className="mt-6">
@@ -87,8 +124,8 @@ const HomePage = ({ session, messages }) => {
             </button>
             <div className="absolute right-0 mt-2 bg-gray-800 text-white rounded-lg shadow-lg py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="px-4 py-2">
-                <p className="font-semibold text-white"> {session.userName}</p>
-                <p className="text-sm text-gray-400"> {session.user.email}</p>
+                <p className="font-semibold text-white">{session.userName}</p>
+                <p className="text-sm text-gray-400">{session.user.email}</p>
               </div>
               <div className="border-t border-gray-700"></div>
               <div className="px-4 py-2">
@@ -105,19 +142,31 @@ const HomePage = ({ session, messages }) => {
 
         {/* Email List */}
         <div className="flex-1 p-6 overflow-y-auto">
-          {isCompose && <Compose session={session} />}
+          {isCompose && (
+            <Compose
+              session={session}
+              setIsCompose={setIsCompose}
+              notify={notify}
+            />
+          )}
           {!isCompose && (
             <div className="space-y-4">
               {messages.map((message) => {
                 const { messageid, body, senderemail, subject, datesent } =
                   message;
+                const isExpanded = expandedMessage === messageid;
                 let preview = body;
-                if (preview.length > 20) {
-                  const cutoff = preview.slice(0, 30).lastIndexOf(" ");
-                  preview =
-                    cutoff > 0
-                      ? preview.slice(0, cutoff) + "..."
-                      : preview.slice(0, 30) + "...";
+                if (!isExpanded) {
+                  const tempDiv = document.createElement("div");
+                  tempDiv.innerHTML = body;
+                  preview = tempDiv.textContent || tempDiv.innerText || "";
+                  if (preview.length > 20) {
+                    const cutoff = preview.slice(0, 30).lastIndexOf(" ");
+                    preview =
+                      cutoff > 0
+                        ? preview.slice(0, cutoff) + "..."
+                        : preview.slice(0, 30) + "...";
+                  }
                 }
                 return (
                   <div
@@ -131,7 +180,19 @@ const HomePage = ({ session, messages }) => {
                       </span>
                     </div>
                     <p className="text-gray-300">{senderemail}</p>
-                    <p className="text-gray-400">{preview}</p>
+                    <div className="text-gray-400">
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: isExpanded ? body : preview,
+                        }}
+                      />
+                      <button
+                        onClick={() => toggleReadMore(messageid)}
+                        className="text-blue-400 hover:underline mt-2"
+                      >
+                        {isExpanded ? "Show Less" : "Read More"}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
